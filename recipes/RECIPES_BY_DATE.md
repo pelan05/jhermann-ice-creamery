@@ -6,8 +6,15 @@
 
 ## 2026
 
+### February 2026
+
+- **2026-02-25** — [Fruity FroYo (Deluxe)](Fruity%20FroYo%20(Deluxe)/README.md)
+- **2026-02-14** — [Coconut FroYo (Deluxe)](Coconut%20FroYo%20(Deluxe)/README.md)
+- **2026-02-11** — [DC's Blank Slate (Deluxe)](DC's%20Blank%20Slate%20(Deluxe)/README.md)
+
 ### January 2026
 
+- **2026-01-31** — [Ultimate FroYo (Deluxe)](Ultimate%20FroYo%20(Deluxe)/README.md)
 - **2026-01-27** — [Crème Caramel (Deluxe)](Crème%20Caramel%20(Deluxe)/README.md)
 - **2026-01-09** — [Irish Cream (Deluxe)](Irish%20Cream%20(Deluxe)/README.md)
 - **2026-01-07** — [Piña Colada Cocktail (Deluxe)](Piña%20Colada%20Cocktail%20(Deluxe)/README.md)
@@ -30,6 +37,7 @@
 - **2025-11-04** — [Vanilla Paste](Vanilla%20Paste/README.md)
 - **2025-11-02** — [Vegan Vanilla (Deluxe)](Vegan%20Vanilla%20(Deluxe)/README.md)
 - **2025-11-02** — [Vegan Gingerbread (Deluxe)](Vegan%20Gingerbread%20(Deluxe)/README.md)
+- **2025-11-02** — [Speyside Vanilla (Deluxe)](Speyside%20Vanilla%20(Deluxe)/README.md)
 - **2025-11-02** — [Peaches & Cream (Deluxe)](Peaches%20%26%20Cream%20(Deluxe)/README.md)
 - **2025-11-02** — [Buttermilk Vanilla (Deluxe)](Buttermilk%20Vanilla%20(Deluxe)/README.md)
 
@@ -173,6 +181,6 @@
 
 ---
 
-*Generated on 2026-01-28 based on git commit history*
+*Generated on 2026-03-02 based on git commit history*
 
-**Total recipes:** 118
+**Total recipes:** 123
