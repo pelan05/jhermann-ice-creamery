@@ -7,7 +7,6 @@ excluded_tags:
 - Allulose
 - Vanilla
 tags:
-- Draft
 - Emulsifier
 - Erythritol
 - Fruit
@@ -28,12 +27,13 @@ made from creamy 3.5% yogurt, and fresh or frozen fruit.
 Rounded out with gentle sweetness and balanced
 stabilizers for a smooth, scoopable texture.
 
-Spin on “FroYo”, scrape down, and re-mix.
-> <img width=220 alt="After 1st Spin" src="_1.jpg" class="zoomable" />
-> <img width=220 alt="After Mix-in" src="_2.jpg" class="zoomable" />
-> <img width=220 alt="Scooped" src="_3.jpg" class="zoomable" />
+Spun on “Light Ice Cream”, scrape down, and “Ice Cream”.
 
-Rating: 😋🥛🍒🍓🫐 (untested)
+> <img width=220 alt="After 1st Spin" src="Fruity-FroYo-SB_2026-03-02_1.jpg" class="zoomable" />
+> <img width=220 alt="After 2nd Spin" src="Fruity-FroYo-SB_2026-03-02_2.jpg" class="zoomable" />
+> <img width=220 alt="Scooped" src="Fruity-FroYo-SB_2026-03-02_3.jpg" class="zoomable" />
+
+Rating: 😋🥛🍒🍓🫐 (primarily tangy yogurt, with the fruit in the background)
 
 # INGREDIENTS
 
