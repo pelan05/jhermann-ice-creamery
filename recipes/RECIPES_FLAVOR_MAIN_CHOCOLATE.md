@@ -4,6 +4,7 @@
 
 ---
 
+- **?** — [Protein Choc (Deluxe)](Protein%20Choc%20(Deluxe)/README.md)
 - **2025-06-08** — [CocoaLow (Deluxe)](CocoaLow%20(Deluxe)/README.md)
 - **2024-11-13** — [ChiaChoco (Deluxe)](ChiaChoco%20(Deluxe)/README.md)
 - **2024-10-25** — [Cacao Noir (Deluxe)](Cacao%20Noir%20(Deluxe)/README.md)
