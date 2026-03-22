@@ -25,6 +25,8 @@ Chocolate ice cream, very high in protein.
 You can boost the chocolate flavor by using chocolate milk,
 and adding dark chocolate as a mix-in or by melting it into the bloomed cocoa.
 
+> <img width=332 alt="Served" src="Protein-Choc_2026-03-10_4.jpg" class="zoomable" />
+
 Spin on “Light Ice Cream”, scrape down, and run a mix-in cycle.
 
 > <img width=220 alt="After 1st Spin" src="Protein-Choc_2026-03-10_1.jpg" class="zoomable" />
@@ -46,8 +48,8 @@ Rating: 😋🥛🍫🍫🍫 (strong chocolate flavor, soft after mix-in run, pr
 **Wet**
 
   - _300ml_ [Soy milk 1.6% (sugar-free) \[Berief\]](/ice-creamery/info/ingredients/#soy-milk){target="_blank"}<sup>↗</sup> • *alternative:* any other preferred milk (~2% fat)
-  - _20g_ [Glycerin (E422, VG) \[hd-line\]](/ice-creamery/info/ingredients/#vegetable-glycerin-glycerol-vg-e422){target="_blank"}<sup>↗</sup> • *alternative:* 16g (additional) VG for a sober recipe
-  - _15g_ [Brandy or Vodka 40 vol%](/ice-creamery/info/ingredients/#alcohol-ethanol){target="_blank"}<sup>↗</sup> • *alternative:* same amount additional VG for a sober recipe
+  - _20g_ [Glycerin (E422, VG) \[hd-line\]](/ice-creamery/info/ingredients/#vegetable-glycerin-glycerol-vg-e422){target="_blank"}<sup>↗</sup> • POD = 60%; GI = 5; Density = 1.26 g/ml
+  - _15g_ [Brandy or Vodka 40 vol%](/ice-creamery/info/ingredients/#alcohol-ethanol){target="_blank"}<sup>↗</sup> • *alternative:* 12g (additional) VG for a sober recipe
 
 **Dry**
 
@@ -61,7 +63,7 @@ Rating: 😋🥛🍫🍫🍫 (strong chocolate flavor, soft after mix-in run, pr
 
 **Mix-ins**
 
-  - _35g_ [Milk Choc. w/ Nougat \[frankonia\]](/ice-creamery/info/ingredients/#soy-milk){target="_blank"}<sup>↗</sup> • no extra sugar; frozen & chopped [177kcal, 3.5g sugar]
+  - _35g_ Milk Choc. w/ Nougat [frankonia] • no extra sugar; frozen & chopped [177kcal, 3.5g sugar]
 
 # DIRECTIONS
 
