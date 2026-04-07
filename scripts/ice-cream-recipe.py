@@ -3,7 +3,7 @@
     Python script that spits out Markdown based on a Libreoffice spreadsheet
     (CSV export of a recipe sheet).
 
-    Copyright (c) 2024 Jürgen Hermann
+    Copyright (c) 2024–2026 Jürgen Hermann
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@ import os
 import re
 import csv
 import sys
+import shlex
 import difflib
 import argparse
 import subprocess
@@ -35,6 +36,7 @@ from pprint import pp  # pylint: disable=unused-import
 from pathlib import Path
 from operator import itemgetter
 from collections import defaultdict
+from dataclasses import dataclass
 
 import yaml
 from attrdict import AttrDict
@@ -150,6 +152,8 @@ def add_default_tags(md_text, docmeta, title=''):
     docmeta.setdefault('tags', ['Draft'])
     docmeta['tags'] = list(set(docmeta['tags']) - CALCULATED_TAGS)
     kcal = re.search(r'100g; ([.0-9]+) kcal;', md_text)
+    if not kcal:
+        kcal = re.search(r'\|\s*🔥 Energy \(kcal\)\s*\|\s*([.0-9]+)\s*\|', md_text)
     if kcal and float(kcal.group(1)) <= TAG_LIGHT_KCAL_LIMIT:
         docmeta['tags'].append('Light')
     pac = re.search(r'FPDF / .?PAC.+:.?.? ([.0-9]+)', md_text)
@@ -245,6 +249,10 @@ def ingredient_link(ingredient, kind='ingredients', threshold=0.4, args=None):
             link += '{target="_blank"}<sup>↗</sup>'
         return link
 
+    # check if already linked (Markdown or HTML link)
+    if re.search(r'\[[^\]]+\]\([^\)]+\)', ingredient) or '<a ' in ingredient:
+        return ingredient
+
     args = vars(args) if args else {}
     for key in PREPPED:
         if key in ingredient:
@@ -282,6 +290,297 @@ def info_link(term, args=None):
             term = term.replace(fragment, link)
     return term
 
+
+def nutrition_link(ingredient_id):
+    """Return a nutrition table link for a known ingredient id."""
+    if not ingredient_id:
+        return ''
+    return (
+        f' <a id="id-{ingredient_id}" '
+        f'href="{WEBSITE_BASE_URL}/info/nutrition/#id-{ingredient_id}">ℹ️</a>'
+    )
+
+
+def has_macro_row_data(row):
+    """Return true if an ingredient row is included in the macro export."""
+    return bool((row.get('kcal') or '').strip())
+
+
+class ImperialUnitTransform:
+    """Transform metric ingredient amounts into compact US kitchen units."""
+
+    TSP_GLYPHS = {
+        0.125: '⅛', 0.25: '¼', 0.375: '⅜', 0.5: '½',
+        0.625: '⅝', 0.75: '¾', 0.875: '⅞',
+    }
+    TSP_OMIT_PERCENT = 0.03
+    CUP_ML = 236.59
+    FL_OZ_ML = 29.5735
+    TSP_ML = 4.93
+    TBSP_ML = 3 * TSP_ML
+    PLAIN_TBSP_EPS_ML = 1.0
+    OZ_G = 28.35
+
+    @classmethod
+    def format_fractional_tsp(cls, value):
+        """Format fractional teaspoon values in factional steps."""
+        whole = int(value)
+        frac = round((value - whole) * 8) / 8
+        glyph = cls.TSP_GLYPHS.get(frac)
+
+        if whole and glyph:
+            return f'{whole} {glyph}'
+        if whole:
+            return str(whole)
+        return glyph or '0'
+
+    @classmethod
+    def volume_combo(cls, amount, unit):
+        """Convert metric amounts into a compact US kitchen combination.
+
+        For grams, assumes a rough 1g ~= 1ml density as a kitchen estimate.
+        """
+        unit = unit.strip().lower()
+        if unit not in {'g', 'ml', 'fl oz', 'floz'}:
+            return ''
+
+        try:
+            metric = float(amount)
+        except (TypeError, ValueError):
+            return ''
+
+        if metric <= 0:
+            return ''
+
+        # Prefer plain tablespoons for small kitchen-rounded amounts.
+        tbsp_total = metric / cls.TBSP_ML
+        tbsp_rounded = round(tbsp_total)
+        rounded_tbsp_metric = tbsp_rounded * cls.TBSP_ML
+        if (1 - cls.PLAIN_TBSP_EPS_ML + 1 < tbsp_total < 5 + cls.PLAIN_TBSP_EPS_ML
+                and abs(metric - rounded_tbsp_metric) <= cls.PLAIN_TBSP_EPS_ML):
+            return f"{tbsp_rounded} tbsp"
+
+        total_metric = metric
+
+        remaining = metric
+        cups = int(remaining // cls.CUP_ML)
+        remaining -= cups * cls.CUP_ML
+
+        ounces = 0
+        fluid_ounces = 0
+        if unit == 'g':
+            ounces = int(remaining // cls.OZ_G)
+            remaining -= ounces * cls.OZ_G
+        elif unit == 'ml':
+            fluid_ounces = int(remaining // cls.FL_OZ_ML)
+            remaining -= fluid_ounces * cls.FL_OZ_ML
+
+        tbsp = int(remaining // cls.TBSP_ML)
+        remaining -= tbsp * cls.TBSP_ML
+        tsp = round((remaining / cls.TSP_ML) * 4) / 4
+
+        # Normalize carry-over after rounding.
+        if tsp >= 3:
+            tbsp += int(tsp // 3)
+            tsp = round((tsp % 3) * 4) / 4
+        if unit == 'ml':
+            if tbsp >= 2:
+                fluid_ounces += int(tbsp // 2)
+                tbsp = int(tbsp % 2)
+            if fluid_ounces >= 8:
+                cups += int(fluid_ounces // 8)
+                fluid_ounces = int(fluid_ounces % 8)
+
+        # If the tsp percentage is small, omit it for simplicity.
+        has_larger_parts = bool(cups or ounces or fluid_ounces or tbsp)
+        if tsp and has_larger_parts and (tsp * cls.TSP_ML / total_metric) < cls.TSP_OMIT_PERCENT:
+            tsp = 0
+
+        parts = []
+        if cups:
+            parts.append(f"{cups} cup{'s' if cups != 1 else ''}")
+        if ounces:
+            parts.append(f"{ounces} oz")
+        if fluid_ounces:
+            parts.append(f"{fluid_ounces} fl oz")
+        if tbsp:
+            parts.append(f"{tbsp} tbsp")
+        if tsp:
+            parts.append(f"{cls.format_fractional_tsp(tsp)} tsp")
+        if not parts:
+            parts.append('⅛ tsp')
+
+        return ' + '.join(parts)
+
+
+@dataclass
+class IngredientItem:
+    """Handle normalization and rendering of one ingredient row."""
+    data: dict
+    args: argparse.Namespace
+
+    def prepare(self):
+        """Normalize data fields and derive links/units for output."""
+        self.data['spacer'] = '' if self.data['unit'] in {'g', 'ml', ''} else ' '
+        self.data['amount'] = self.data['amount'].replace('.50', '.5')
+        self.data['href'] = ingredient_link(self.data['ingredients'], args=self.args)
+        self.data['imperial'] = ImperialUnitTransform.volume_combo(self.data['amount'], self.data['unit'])
+        self.data['nutrition_link'] = (
+            nutrition_link(self.data.get('id')) if has_macro_row_data(self.data) else ''
+        )
+        return self
+
+    def markdown_line(self):
+        """Render one list line for the ingredient."""
+        line = '  - _{amount}{spacer}{unit}_ {href}'.format(**self.data)
+        if self.data['imperial']:
+            line += f" (≈{self.data['imperial']})"
+        if self.data['comment']:
+            line += f" • {self.data['comment']}"
+        return line + self.data['nutrition_link']
+
+    def prep_nutrition_line(self):
+        """Return nutrition expansion text for known pre-mixes."""
+        for key in ('ICSv2', 'Salty Stability'):
+            if key in self.data['ingredients']:
+                scale = float(self.data['amount']) / sum(PREPPED[key].values())
+                nutrient = ' • '.join([
+                    f"{round(v * scale, 2 if v * scale < 1 else 1)}g {k}"
+                    for k, v in PREPPED[key].items()
+                ])
+                return f"**{self.data['amount']}g '{key}' is:** {nutrient}."
+        return ''
+
+
+@dataclass
+class NutrientItem:
+    """Handle one nutritional CSV row and normalized nutrient access."""
+    label: str
+    weight: str
+    weight_unit: str
+    kcal: str
+    nutrients: dict
+
+    @classmethod
+    def from_csv_row(cls, row, fields):
+        """Parse one CSV nutrition row into structured values."""
+        nutrients = {}
+        for key, value in zip(fields, row[5:]):
+            key = key.strip()
+            value = value.strip()
+            if key and value:
+                nutrients[key] = value
+        return cls(
+            label=row[0].strip(),
+            weight=row[1].strip(),
+            weight_unit=row[2].strip(),
+            kcal=row[4].strip(),
+            nutrients=nutrients,
+        )
+
+    def has_label_fragment(self, text):
+        """Case-insensitive label matching helper."""
+        return text.lower() in self.label.lower()
+
+    def weight_as_number_text(self):
+        """Return weight text without a trailing unit token."""
+        return re.sub(r'\s*[a-zA-Z]+\s*$', '', self.weight).strip() or self.weight
+
+    def normalized_nutrients(self, normalizer):
+        """Return nutrient map with canonical nutrient keys."""
+        return {
+            normalizer(key): value
+            for key, value in self.nutrients.items()
+            if normalizer(key)
+        }
+
+
+@dataclass
+class NutrientFacts:
+    """Build a nutritional facts markdown table from a list of NutrientItem rows."""
+    nutritional_values: list
+
+    @staticmethod
+    def normalize_name(name):
+        """Canonicalize nutrient header names from CSV."""
+        lowered = re.sub(r'[^a-z0-9]+', '', name.lower())
+        aliases = {
+            'fat': 'fat',
+            'totalfat': 'fat',
+            'saturatedfat': 'saturated_fat',
+            'satfat': 'saturated_fat',
+            'saturates': 'saturated_fat',
+            'carbs': 'carbohydrates',
+            'carbohydrates': 'carbohydrates',
+            'totalcarbohydrates': 'carbohydrates',
+            'sugar': 'sugars',
+            'sugars': 'sugars',
+            'fiber': 'dietary_fiber',
+            'fibre': 'dietary_fiber',
+            'dietaryfiber': 'dietary_fiber',
+            'protein': 'protein',
+            'salt': 'salt',
+        }
+        return aliases.get(lowered)
+
+    def build_table(self):
+        """Build markdown table for 100g, per tub/serving, and total values."""
+        if not self.nutritional_values:
+            return []
+
+        def pick_100g_row():
+            for item in self.nutritional_values:
+                if item.has_label_fragment('100g') or item.weight.strip().startswith('100'):
+                    return item
+            return self.nutritional_values[0]
+
+        def pick_total_row():
+            for item in self.nutritional_values:
+                if item.has_label_fragment('total'):
+                    return item
+            return self.nutritional_values[-1]
+
+        def pick_per_serving_row(per_100g, total):
+            for item in self.nutritional_values:
+                if item is not per_100g and item is not total:
+                    return item
+            return None
+
+        def as_value(value):
+            return value if value else '—'
+
+        def has_any_value(*values):
+            return any((v or '').strip() not in {'', '—'} for v in values)
+
+        per_100g = pick_100g_row()
+        total = pick_total_row()
+        per_serving = pick_per_serving_row(per_100g, total)
+
+        values_100g = per_100g.normalized_nutrients(self.normalize_name)
+        values_per_serving = per_serving.normalized_nutrients(self.normalize_name) if per_serving else {}
+        values_total = total.normalized_nutrients(self.normalize_name)
+
+        rows = [
+            ('⚖️ Weight (g)', per_100g.weight_as_number_text(), per_serving.weight_as_number_text() if per_serving else '—', total.weight_as_number_text()),
+            ('🔥 Energy (kcal)', per_100g.kcal or '—', per_serving.kcal if per_serving and per_serving.kcal else '—', total.kcal or '—'),
+            ('🫒 Fat (g)', as_value(values_100g.get('fat')), as_value(values_per_serving.get('fat')), as_value(values_total.get('fat'))),
+            ('🧈 Saturated Fat (g)', as_value(values_100g.get('saturated_fat')), as_value(values_per_serving.get('saturated_fat')), as_value(values_total.get('saturated_fat'))),
+            ('🍞 Carbohydrates (g)', as_value(values_100g.get('carbohydrates')), as_value(values_per_serving.get('carbohydrates')), as_value(values_total.get('carbohydrates'))),
+            ('🍬 Sugars (g)', as_value(values_100g.get('sugars')), as_value(values_per_serving.get('sugars')), as_value(values_total.get('sugars'))),
+            ('💨 Dietary Fiber (g)', as_value(values_100g.get('dietary_fiber')), as_value(values_per_serving.get('dietary_fiber')), as_value(values_total.get('dietary_fiber'))),
+            ('💪 Protein (g)', as_value(values_100g.get('protein')), as_value(values_per_serving.get('protein')), as_value(values_total.get('protein'))),
+            ('🧂 Salt (g)', as_value(values_100g.get('salt')), as_value(values_per_serving.get('salt')), as_value(values_total.get('salt'))),
+        ]
+        rows = [row for row in rows if has_any_value(row[1], row[2], row[3])]
+
+        table = [
+            '| 🥗 Value | 100g | Serving | Total |',
+            '| :--- | ---: | ---: | ---: |',
+        ]
+        table.extend([f'| {label} | {v100} | {vtub} | {vtotal} |' for label, v100, vtub, vtotal in rows])
+        return table
+
+
 def subtitle(text, is_topping=False):
     """Create markdown for a recipe subtitle."""
     # TODO: add a `--format=reddit|generic` option
@@ -309,6 +608,40 @@ def abort(errmsg):
     print(f"ERROR: {errmsg}", file=sys.stderr)
     sys.exit(1)
 
+
+def write_nutrition_db(csv_path, rows):
+    """Write a flat nutrition database for macro exports."""
+    fieldnames = [
+        'id',
+        'ingredient',
+        'kcal',
+        'fat',
+        'carbs',
+        'sugar',
+        'protein',
+        'salt',
+        'fpdf',
+        'msnf',
+        'comment',
+    ]
+    with csv_path.open('w', encoding='utf-8', newline='') as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({
+                'id': row.get('id', ''),
+                'ingredient': row.get('ingredients', ''),
+                'kcal': row.get('kcal', ''),
+                'fat': row.get('fat', ''),
+                'carbs': row.get('carbs', ''),
+                'sugar': row.get('sugar', ''),
+                'protein': row.get('protein', ''),
+                'salt': row.get('salt', ''),
+                'fpdf': row.get('fpdf', ''),
+                'msnf': row.get('msnf', ''),
+                'comment': row.get('comment', ''),
+            })
+
 def parse_cli(argv=None):
     """"""
     argv = argv or sys.argv
@@ -334,13 +667,20 @@ def parse_cli(argv=None):
     return parser.parse_args()
 
 
-def parse_recipe_csv(csv_name, args, images=[]):
-    """Read in an exported recipe spread sheet."""
+@dataclass
+class RecipeDataSheet:
+    """Parse a recipe CSV export into structured card data."""
+    csv_name: Path
+    args: argparse.Namespace
+    images: dict
 
-    def handle_top_row(row):
-        '''Helper for non-ingredient row handling.'''
-        nonlocal images
+    @staticmethod
+    def parse_nutritional_row(row, fields):
+        """Parse one CSV nutrition row into structured values."""
+        return NutrientItem.from_csv_row(row, fields)
 
+    def handle_top_row(self, row, lines, nutrition):
+        """Handle rows outside of ingredient lines."""
         if row[2] and 'MSNF' not in row[0] and 'ℹ️' not in row[0]:
             # structured / complex row, e.g. with formulas
             line = [x.strip() for x in row]
@@ -350,7 +690,7 @@ def parse_recipe_csv(csv_name, args, images=[]):
                 line = ' *', line[1].replace('.00', ''), line[2], line[0]
             lines.append(' '.join(line))
         elif row[1] and row[0].strip():  # row with a value in the 2nd column
-            nutrition.append(f'**{info_link(row[0].strip("ℹ️").strip(), args=args)}:** {row[1].strip()}')
+            nutrition.append(f'**{info_link(row[0].strip("ℹ️").strip(), args=self.args)}:** {row[1].strip()}')
             if any(row[2:]):
                 aux_info = ' • '.join([''] + [x.strip() for x in row[2:] if x.strip()])
                 if aux_info.startswith(' • g • '):
@@ -364,245 +704,258 @@ def parse_recipe_csv(csv_name, args, images=[]):
         elif lines[-1] != '':  # empty row (1st one after some text)
             lines.append('')
 
-    recipe = defaultdict(list)
-    lines = []
-    mix_in = []
-    nutrition = []
-    special_prep = []
-    special_directions = []
-    freezing = [  # inserted before 'mix-in' step
-        ' 1. For better results, let the base age in the fridge (covered, lid on), for a few hours or over night.'
-        ' This helps flavor development and gum hydration, especially with unheated bases.',
-        ' 1. Freeze for 24h with lid on, then spin as usual. Flatten any humps before that.',
-        ' 1. Process with RE-SPIN mode when not creamy enough after the first spin.',
-    ]
+    def parse(self):
+        """Read an exported recipe spread sheet."""
+        recipe = defaultdict(list)
+        lines = []
+        mix_in = []
+        nutrition = []
+        nutritional_values = []
+        special_prep = []
+        special_directions = []
+        freezing = [  # inserted before 'mix-in' step
+            ' 1. For better results, let the base age in the fridge (covered, lid on), for a few hours or over night.'
+            ' This helps flavor development and gum hydration, especially with unheated bases.',
+            ' 1. Freeze for 24h with lid on, then spin as usual. Flatten any humps before that.',
+            ' 1. Process with RE-SPIN mode when not creamy enough after the first spin.',
+        ]
 
-    with open(csv_name, 'r', encoding='utf-8') as handle:
-        reader = csv.reader(handle, delimiter=';')
-        row = ''
-        title = next(reader)[0]
-        is_topping = title.endswith('Topping)') or title.endswith('Mix-in)')
-        if is_topping:
-            if 999 in images:
-                # No default image
-                del images[999]
-            if not title.endswith(' (Mix-in)'):
-                title = title.rsplit('(', 1)[0].strip()
-        lines.extend([f"#{'#' if is_topping else ''} {title}", ''])
-        if 1 in images:
-            lines[-1:-1] = [images[1]]
-            del images[1]
+        with open(self.csv_name, 'r', encoding='utf-8') as handle:
+            reader = csv.reader(handle, delimiter=';')
+            row = ''
+            title = next(reader)[0]
+            is_topping = title.endswith('Topping)') or title.endswith('Mix-in)')
+            if is_topping:
+                if 999 in self.images:
+                    # No default image
+                    del self.images[999]
+                if not title.endswith(' (Mix-in)'):
+                    title = title.rsplit('(', 1)[0].strip()
+            lines.extend([f"#{'#' if is_topping else ''} {title}", ''])
+            if 1 in self.images:
+                lines[-1:-1] = [self.images[1]]
+                del self.images[1]
 
-        # Handle nutrients
-        next(reader)  # skip empty row
-        fields = next(reader)[5:]  # nutrient column headers, followed by 3 lines with 100g/360g/total values
-        while True:
-            row = next(reader)
-            if 'Nutritional' not in row[0]:
-                break  # end of nutrient / macros info
-            data = dict(zip(fields, row[5:]))
-            nutrients = "; ".join([f'{k.lower()} {v}g' for k, v in data.items() if v])
-            nutrition.append(f'**{row[0]}:** {row[1]}{row[2]}; {row[4]} kcal; {nutrients}')
+            # Handle nutrients
+            next(reader)  # skip empty row
+            fields = next(reader)[5:]  # nutrient column headers, followed by 3 lines with 100g/360g/total values
+            while True:
+                row = next(reader)
+                if 'Nutritional' not in row[0]:
+                    break  # end of nutrient / macros info
+                nutritional_values.append(self.parse_nutritional_row(row, fields))
 
-        # Parse up to ingredient list
-        while row[0] != 'Ingredients':  # process comment / text lines, up to the ingredient list
-            img_idx = min(images) if images else 9999
-            #print('L:', len(lines), 'I:', img_idx); pp(lines[-3:])
-            if images and len(lines) >= img_idx:
-                lines[img_idx:img_idx] = [images[img_idx], '']
-                del images[img_idx]
+            # Parse up to ingredient list
+            while row[0] != 'Ingredients':  # process comment / text lines, up to the ingredient list
+                img_idx = min(self.images) if self.images else 9999
+                #print('L:', len(lines), 'I:', img_idx); pp(lines[-3:])
+                if self.images and len(lines) >= img_idx:
+                    lines[img_idx:img_idx] = [self.images[img_idx], '']
+                    del self.images[img_idx]
 
-            row = next(reader)
-            #print('!', row)
-            if row[0] == 'Ingredients':
-                break  # pass header line to ingredients processing
-            elif row[0].lstrip().startswith('1. '):
-                if 'prep' in row[0]:
-                    special_prep.append(' ' + row[0].strip())
-                elif 'Before freezing' in row[0]:
-                    freezing[0:0] = [' ' + row[0].strip()]
-                elif ' a mix-in' in row[0] or ' the mix-in' in row[0]:
-                    mix_in[0:0] = [' ' + row[0].strip()]
+                row = next(reader)
+                #print('!', row)
+                if row[0] == 'Ingredients':
+                    break  # pass header line to ingredients processing
+                elif row[0].lstrip().startswith('1. '):
+                    if 'prep' in row[0]:
+                        special_prep.append(' ' + row[0].strip())
+                    elif 'Before freezing' in row[0]:
+                        freezing[0:0] = [' ' + row[0].strip()]
+                    elif ' a mix-in' in row[0] or ' the mix-in' in row[0]:
+                        mix_in[0:0] = [' ' + row[0].strip()]
+                    else:
+                        special_directions.append(' ' + row[0].strip())
                 else:
-                    special_directions.append(' ' + row[0].strip())
-            else:
-                handle_top_row(row)
+                    self.handle_top_row(row, lines, nutrition)
 
-        if images:
-            lines.extend([''] + list(images.values()))
-            images = {}
+            if self.images:
+                lines.extend([''] + list(self.images.values()))
+                self.images = {}
 
-        fields = [x.lower().replace('#', 'step') for x in row]
-        #print(fields)
+            fields = [x.lower().replace('#', 'step') for x in row]
+            #print(fields)
 
-        # Read ingredients
-        for row in reader:
-            data = dict(zip(fields, row))
-            if MILK_HINT[0] in data['ingredients'] and not data['comment']:
-                data['comment'] = MILK_HINT[1]
-            if not data['step']:
-                handle_top_row(row)
-            elif data['ingredients'] and data.get('counts?', 1) != '0':
-                if data['amount'].endswith('.00'):
-                    data['amount'] = data['amount'][:-3]
-                if args.macros or data['amount'] and data['amount'] != '0':
-                    step = int(data['step'])
-                    recipe[step].append(data)
+            # Read ingredients
+            for row in reader:
+                data = dict(zip(fields, row))
+                if MILK_HINT[0] in data['ingredients'] and not data['comment']:
+                    data['comment'] = MILK_HINT[1]
+                if not data['step']:
+                    self.handle_top_row(row, lines, nutrition)
+                elif data['ingredients'] and data.get('counts?', 1) != '0':
+                    if data['amount'].endswith('.00'):
+                        data['amount'] = data['amount'][:-3]
+                    if self.args.macros or data['amount'] and data['amount'] != '0':
+                        step = int(data['step'])
+                        recipe[step].append(data)
 
-        # End of CSV processing
+            # End of CSV processing
 
-    for idx, line in enumerate(lines):
-        if line.startswith('!!! '):  # no smarty quotes in superfences
-            lines[idx] = lines[idx].replace('“', '"').replace('”', '"')
+        for idx, line in enumerate(lines):
+            if line.startswith('!!! '):  # no smarty quotes in superfences
+                lines[idx] = lines[idx].replace('“', '"').replace('”', '"')
 
-    return AttrDict(dict(
-        recipe=recipe,
-        lines=lines,
-        nutrition=nutrition,
-        special_prep=special_prep,
-        special_directions=special_directions,
-        mix_in=mix_in,
-        freezing=freezing,
-        is_topping=is_topping,
-        title=title,
-    ))
+        return AttrDict(dict(
+            recipe=recipe,
+            lines=lines,
+            nutrition=nutrition,
+            nutritional_values=nutritional_values,
+            special_prep=special_prep,
+            special_directions=special_directions,
+            mix_in=mix_in,
+            freezing=freezing,
+            is_topping=is_topping,
+            title=title,
+        ))
 
-def main():
-    """Main loop."""
-    args = parse_cli()
-    #pp(args)
-    steps = {  # These correlate to the "#" column in the sheet's ingredient list, with prep ~ 0 and mix-in ~ 4
-        'Prep': 'Prepare specified ingredients by dissolving / hydrating in hot water.',
-        'Wet': 'Add "wet" ingredients to empty Creami tub.',
-        'Dry': """
-            Weigh and mix dry ingredients, easiest by adding to a jar with a secure lid and shaking vigorously.
-            Pour into the tub and *QUICKLY* use an immersion blender on full speed to homogenize everything.
-            Let blender run until thickeners are properly hydrated, up to 1-2 min. Or blend again after waiting that time.
-        """,
-        'Fill to MAX': 'Add remaining ingredients (to the MAX line) and stir with a spoon.',
-        'Mix-ins':
-            'Process with MIX-IN after adding mix-ins evenly.'
-            ' For that, add partial amounts into a hole going down to the bottom, and fold the ice cream over, building pockets of mix-ins.',
-        'Topping Options': '',
-        'Optional / Choices': '',
-    }
-    premix = [
-        ' 1. Add the prepared dry ingredients, and blend QUICKLY using an immersion blender on full speed.',
-    ]
-    soaking = [
-        ' 1. After mixing, let the base sit in the fridge for at least 30min (better 2h),'
-        ' for the seeds to properly soak. Stir before freezing.',
-    ]
+
+@dataclass
+class MarkdownRecipeFormatter:
+    """Build and write recipe markdown from parsed card data."""
+    args: argparse.Namespace
+    docmeta: dict
+    card: AttrDict
+
     STEP_PREP = 0
     STEP_WET = 1
     STEP_DRY = 2
     STEP_FILL = 3
     STEP_MIX_IN = 4
 
-    images = read_images()
-    docmeta = read_meta()
-    parse_info_docs('ingredients', '### ')
-    parse_info_docs('glossary', '## ')
-    #print(yaml.safe_dump(docmeta)); die
+    def __post_init__(self):
+        self.steps = {  # These correlate to the "#" column in the sheet's ingredient list, with prep ~ 0 and mix-in ~ 4
+            'Prep': 'Prepare specified ingredients by dissolving / hydrating in hot water.',
+            'Wet': 'Add "wet" ingredients to empty Creami tub.',
+            'Dry': """
+                Weigh and mix dry ingredients, easiest by adding to a jar with a secure lid and shaking vigorously.
+                Pour into the tub and *QUICKLY* use an immersion blender on full speed to homogenize everything.
+                Let blender run until thickeners are properly hydrated, up to 1-2 min. Or blend again after waiting that time.
+            """,
+            'Fill to MAX': 'Add remaining ingredients (to the MAX line) and stir with a spoon.',
+            'Mix-ins':
+                'Process with MIX-IN after adding mix-ins evenly.'
+                ' For that, add partial amounts into a hole going down to the bottom, and fold the ice cream over, building pockets of mix-ins.',
+            'Topping Options': '',
+            'Optional / Choices': '',
+        }
+        self.premix = [
+            ' 1. Add the prepared dry ingredients, and blend QUICKLY using an immersion blender on full speed.',
+        ]
+        self.soaking = [
+            ' 1. After mixing, let the base sit in the fridge for at least 30min (better 2h),'
+            ' for the seeds to properly soak. Stir before freezing.',
+        ]
+        self.recipe = defaultdict(list)
+        self.recipe.update(self.card.recipe)
+        self.lines = list(self.card.lines)
+        self.nutrition = list(self.card.nutrition)
+        self.nutritional_values = list(self.card.nutritional_values)
+        self.special_prep = self.card.special_prep
+        self.special_directions = self.card.special_directions
+        self.is_topping = self.card.is_topping
+        self.title = self.card.title
 
-    card = parse_recipe_csv(args.csv_name, args, images)
-    recipe = defaultdict(list)
-    recipe.update(card.recipe)
-    lines, nutrition, special_prep, special_directions, is_topping, title = \
-        list(card.lines), list(card.nutrition), \
-        card.special_prep, card.special_directions, card.is_topping, card.title
-    #pp(dict(card))
-    #pp((dict(recipe), lines, nutrition))
+    def render_markdown(self):
+        """Build the markdown document text."""
+        if 'Simple' in self.docmeta['tags']:
+            self.lines.extend([
+                '',
+                '!!! info "Simple Recipe"',
+                '',
+                "    Read [About 'Simple' Recipes](/ice-creamery/info/tips%2Btricks/#about-simple-recipes)"
+                "    regarding 'exotic' ingredients and their alternatives.",
+                '',
+            ])
 
-    if 'Simple' in docmeta['tags']:
-        lines.extend([
-            '',
-            '!!! info "Simple Recipe"',
-            '',
-            "    Read [About 'Simple' Recipes](/ice-creamery/info/tips%2Btricks/#about-simple-recipes)"
-            "    regarding 'exotic' ingredients and their alternatives.",
-            '',
-        ])
+        # Add ingredient list
+        self.lines.extend([
+            subtitle('Ingredients', self.is_topping),
+            None if self.is_topping else '\nℹ️ Brand names are in square brackets `[...]`.'])
+        for step, (name, _directions) in enumerate(self.steps.items()):
+            if not self.recipe[step]:  # no ingredients for this step?
+                continue
+            self.lines.extend([''] if self.is_topping else ['', f'**{name}**', ''])
+            for ingredient in self.recipe[step]:
+                item = IngredientItem(ingredient, self.args).prepare()
+                self.lines.append(item.markdown_line())
+                if not self.args.macros:
+                    prep_nutrition = item.prep_nutrition_line()
+                    if prep_nutrition:
+                        self.nutrition.append(prep_nutrition)
 
-    # Add ingredient list
-    lines.extend([
-        subtitle('Ingredients', is_topping),
-        None if is_topping else '\nℹ️ Brand names are in square brackets `[...]`.'])
-    for step, (name, directions) in enumerate(steps.items()):
-        if not recipe[step]:  # no ingredients for this step?
-            continue
-        lines.extend([''] if is_topping else ['', f'**{name}**', ''])
-        for ingredient in recipe[step]:
-            ingredient['spacer'] = '' if ingredient['unit'] in {'g', 'ml', ''} else ' '
-            ingredient['amount'] = ingredient['amount'].replace(".50", ".5")
-            ingredient['href'] = ingredient_link(ingredient['ingredients'], args=args)
-            lines.append('  - _{amount}{spacer}{unit}_ {href}'.format(**ingredient))
-            if ingredient['comment']:
-                lines[-1] += f" • {ingredient['comment']}"
-            if not args.macros:
-                for key in ('ICSv2', 'Salty Stability'):
-                    if key in ingredient['ingredients']:
-                        scale = float(ingredient['amount']) / sum(PREPPED[key].values())
-                        nutrient = ' • '.join([f"{round(v * scale, 2 if v * scale < 1 else 1)}g {k}"
-                                               for k, v in PREPPED[key].items()])
-                        nutrition.append(f"**{ingredient['amount']}g '{key}' is:** {nutrient}.")
-                        break
+        # Add directions
+        excluded_steps = re.compile(f"({')|('.join(self.docmeta.get('excluded_steps', [])).lower()})", flags=re.IGNORECASE)
+        self.lines.extend(['', subtitle('Directions', self.is_topping), ''])
+        if self.special_prep:
+            self.lines.extend(self.special_prep)
+        if self.special_directions:
+            self.lines.extend(self.special_directions)
+            if any(x in line.lower().split() for line in self.special_directions for x in {'heat', 'cook'}):
+                self.docmeta['tags'].append('Cooked Base')
+        if not self.is_topping:
+            for step, (_name, directions) in enumerate(self.steps.items()):
+                if 'excluded_steps' in self.docmeta:
+                    directions = '\n'.join(line
+                        for line in directions.splitlines()
+                        if not excluded_steps.search(line))
+                if step == self.STEP_PREP:
+                    if self.recipe[self.STEP_PREP] and not any('water' in x['ingredients'].lower() for x in self.recipe[self.STEP_PREP]):
+                        continue
+                elif step == self.STEP_MIX_IN:
+                    if any('chia' in x['ingredients'].lower() for x in self.recipe[self.STEP_DRY]):
+                        self.lines.extend(self.soaking)
+                    self.lines.extend(self.card.freezing)
+                    self.lines.extend(self.card.mix_in)
+                if self.recipe[step]:  # we have ingredients for this step?
+                    for line in [x.strip() for x in directions.strip().splitlines()]:
+                        self.lines.append(f' 1. {line}')
+                if step == self.STEP_WET:
+                    if self.recipe[self.STEP_PREP] and not any('water' in x['ingredients'].lower() for x in self.recipe[self.STEP_PREP]):
+                        self.lines.extend([x for x in self.premix if not excluded_steps.search(x)])
 
-    # Add directions
-    excluded_steps = re.compile(f"({')|('.join(docmeta.get('excluded_steps', [])).lower()})", flags=re.IGNORECASE)
-    lines.extend(['', subtitle('Directions', is_topping), ''])
-    if special_prep:
-        lines.extend(special_prep)
-    if special_directions:
-        lines.extend(special_directions)
-        if any(x in line.lower().split() for line in special_directions for x in {'heat', 'cook'}):
-            docmeta['tags'].append('Cooked Base')
-    if not is_topping:
-        for step, (name, directions) in enumerate(steps.items()):
-            if 'excluded_steps' in docmeta:
-                directions = '\n'.join(line
-                    for line in directions.splitlines()
-                    if not excluded_steps.search(line))
-            #if not directions:
-            #    continue
-            if step == STEP_PREP:
-                if recipe[STEP_PREP] and not any('water' in x['ingredients'].lower() for x in recipe[STEP_PREP]):
-                    continue
-            elif step == STEP_MIX_IN:
-                if any('chia' in x['ingredients'].lower() for x in recipe[STEP_DRY]):
-                    lines.extend(soaking)
-                lines.extend(card.freezing)
-                lines.extend(card.mix_in)
-            if recipe[step]:  # we have ingredients for this step?
-                for line in [x.strip() for x in directions.strip().splitlines()]:
-                    lines.append(f' 1. {line}')
-            if step == STEP_WET:
-                if recipe[STEP_PREP] and not any('water' in x['ingredients'].lower() for x in recipe[STEP_PREP]):
-                    lines.extend([x for x in premix if not excluded_steps.search(x)])
+        # Add nutritional info
+        self.lines.extend(['', subtitle('Nutritional & Other Info', self.is_topping), '' if self.is_topping else None, ''])
+        self.lines.extend(NutrientFacts(self.nutritional_values).build_table())
+        if self.nutrition:
+            self.lines.extend(['', '- ' + '\n- '.join(self.nutrition)])
 
-    # Add nutritional info
-    lines.extend([
-        '', subtitle('Nutritional & Other Info', is_topping), '' if is_topping else None, '',
-        '- ' + '\n- '.join(nutrition)])
+        # Add default tags
+        self.lines.append('')  # add trailing line end
+        self.lines = [x for x in self.lines if x is not None]
+        md_text = '\n'.join(self.lines)
+        if not self.is_topping:
+            md_text = add_default_tags(md_text, self.docmeta, self.title)
+        return md_text
 
-    # Add default tags
-    lines.append('')  # add trailing line end
-    lines = [x for x in lines if x is not None]
-    md_text = '\n'.join(lines)
-    if not is_topping:
-        md_text = add_default_tags(md_text, docmeta, title)
+    def normalize_markdown(self, md_text):
+        """Apply final markdown normalization and snippet expansion."""
+        snippet_re = '|'.join([re.escape(x) for x in SNIPPETS.keys()])
+        snippet_re = f'<!-- SNIPPET: ({snippet_re}) -->'
+        md_text, _ = re.subn('\n{2,}', '\n\n', md_text)
+        md_text, _ = re.subn(r'(\d) • g', r'\1g', md_text)
+        md_text, _ = re.subn(snippet_re, lambda x: SNIPPETS[x.group(1)].strip(), md_text)
+        doc_start = md_text.find('\n---\n')
+        if not self.args.tags_only:
+            for fragment in self.docmeta.get("remove", []):
+                md_text = md_text[:doc_start] + md_text[doc_start:].replace(fragment, '')
+            for fragment in self.docmeta.get("replace", []):
+                orig, subst = re.split('=>', fragment, 1)
+                md_text = md_text[:doc_start] + md_text[doc_start:].replace(orig, subst)
+        return md_text
 
-    # Create the Markdown file
-    md_file = markdown_file(title, is_topping)
-    md_text = md_text.replace('http://bit.ly/4frc4Vj', '[Ice Cream Stabilizer]'
-        f'({WEBSITE_BASE_URL}'
-        '/I/Ice%20Cream%20Stabilizer%20(ICS)/)')  # take care of Reddit stupidness
-
-    if args.macros:
+    def output_macros(self):
+        """Write nutrition database and print macro table output."""
         def all_ingredients():
             'Helper.'
-            for step in recipe.values():
+            for step in self.recipe.values():
                 yield from step
+
+        macro_rows = sorted(
+            (row for row in all_ingredients() if has_macro_row_data(row)),
+            key=lambda row: row['ingredients'].lower(),
+        )
+        write_nutrition_db(Path(__file__).resolve().with_name('nutrition-db.csv'), macro_rows)
 
         fields = dict(
             href='Ingredient' + '\u2001' * 15,
@@ -622,47 +975,63 @@ def main():
         ])
         idx = 0
         print(header)
-        for row in sorted(all_ingredients(), key=lambda x: x['ingredients'].lower()):
-            if row['kcal']:
-                if idx and not(idx % 10):
-                    print(header)
-                print('|', ' | '.join(row[x].replace(' [', '<br />[').replace(r' \[', r'<br />\[') for x in fields), '|')
-                idx = idx + 1
-        return
+        for row in macro_rows:
+            if idx and not(idx % 10):
+                print(header)
+            row['href'] = ingredient_link(row['ingredients'], args=self.args)
+            if row.get('id'):
+                row['href'] = f'<span id="id-{row["id"]}">{row["href"]}</span>'
+            print('|', ' | '.join(row.get(x, '').replace(' [', '<br />[').replace(r' \[', r'<br />\[') for x in fields), '|')
+            idx = idx + 1
 
-    if args.tags_only:
-        md_text = Path(md_file).read_text(encoding='utf-8').splitlines()
-        if md_text[0] == '---':
-            for idx in range(1, len(md_text)):
-                if md_text[idx] == '---':
-                    del md_text[0:idx+1]
-                    break
-        md_text = '\n'.join(md_text).strip() + '\n'
-        md_text = add_default_tags(md_text, docmeta, title)
-        print(f'Updating tags only: {", ".join(sorted(docmeta["tags"]))}')
+    def run(self):
+        """Render and output markdown based on CLI flags."""
+        if self.args.macros:
+            self.output_macros()
+            return
 
-    snippet_re = '|'.join([re.escape(x) for x in SNIPPETS.keys()])
-    snippet_re = f'<!-- SNIPPET: ({snippet_re}) -->'
-    md_text, _ = re.subn('\n{2,}', '\n\n', md_text)
-    md_text, _ = re.subn(r'(\d) • g', r'\1g', md_text)
-    md_text, _ = re.subn(snippet_re, lambda x: SNIPPETS[x.group(1)].strip(), md_text)
-    doc_start = md_text.find('\n---\n')
-    if not args.tags_only:
-        for fragment in docmeta.get("remove", []):
-            md_text = md_text[:doc_start] + md_text[doc_start:].replace(fragment, '')
-        for fragment in docmeta.get("replace", []):
-            orig, subst = re.split('=>', fragment, 1)
-            md_text = md_text[:doc_start] + md_text[doc_start:].replace(orig, subst)
+        md_text = self.render_markdown()
+        md_file = markdown_file(self.title, self.is_topping)
+        md_text = md_text.replace('http://bit.ly/4frc4Vj', '[Ice Cream Stabilizer]'
+            f'({WEBSITE_BASE_URL}'
+            '/I/Ice%20Cream%20Stabilizer%20(ICS)/)')  # take care of Reddit stupidness
 
-    if args.dry_run:
-        print(md_text, end=None)
-    else:
-        with open(md_file, 'w', encoding='utf-8') as out:
-            out.write(md_text)
+        if self.args.tags_only:
+            md_text = Path(md_file).read_text(encoding='utf-8').splitlines()
+            if md_text[0] == '---':
+                for idx in range(1, len(md_text)):
+                    if md_text[idx] == '---':
+                        del md_text[0:idx+1]
+                        break
+            md_text = '\n'.join(md_text).strip() + '\n'
+            md_text = add_default_tags(md_text, self.docmeta, self.title)
+            print(f'Updating tags only: {", ".join(sorted(self.docmeta["tags"]))}')
 
-        # Open markdown file in VS Code
-        if not args.no_edit:
-            os.system(f'{os.getenv("GUI_EDITOR", "code")} "{md_file}"')
+        md_text = self.normalize_markdown(md_text)
+
+        if self.args.dry_run:
+            print(md_text, end=None)
+        else:
+            with open(md_file, 'w', encoding='utf-8') as out:
+                out.write(md_text)
+
+            # Open markdown file in VS Code
+            if not self.args.no_edit:
+                editor_cmd = shlex.split(os.getenv("GUI_EDITOR", "code"))
+                if not editor_cmd:
+                    editor_cmd = ["code"]
+                subprocess.run([*editor_cmd, md_file], check=False)
+
+def main():
+    """Main loop."""
+    args = parse_cli()
+    images = read_images()
+    docmeta = read_meta()
+    parse_info_docs('ingredients', '### ')
+    parse_info_docs('glossary', '## ')
+
+    card = RecipeDataSheet(args.csv_name, args, images).parse()
+    MarkdownRecipeFormatter(args, docmeta, card).run()
 
 if __name__ == '__main__':
     main()

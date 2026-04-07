@@ -26,23 +26,15 @@
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 """
-import os
-import re
-import csv
 import sys
-import json
 import argparse
 import importlib.util as imp_util
 
 from pprint import pp  # pylint: disable=unused-import
 from pathlib import Path
-from operator import itemgetter
-from collections import defaultdict
 
-import sys
-
-def load_module(file_name, module_name=''):
-    """Load a script fiel as a module."""
+def load_module(file_name, module_name=""):
+    """Load a script file as a module."""
     module_name = module_name or Path(file_name).stem.replace('-', '_')
     spec = imp_util.spec_from_file_location(module_name, file_name)
     module = imp_util.module_from_spec(spec)
@@ -136,8 +128,9 @@ INGREDIENTS_ITEM = """{{
     "portionSize": 100
 }}"""
 
+
 def parse_cli(argv=None):
-    """"""
+    """Parse command-line arguments."""
     argv = argv or sys.argv
     parser = argparse.ArgumentParser(
         prog='icc-tool',
@@ -156,14 +149,13 @@ def parse_cli(argv=None):
 
     return parser.parse_args()
 
+
 def write_recipe(args):
     """Write a recipe JSON file."""
+
     def all_ingredients():
         for step in card.recipe.values():
             yield from step
-
-    def amount(key):
-        return float(ingredient[key] or 0) / 100
 
     card = recipe_lib.parse_recipe_csv(args.csv_name, args)
     #pp(dict(card))
@@ -172,9 +164,9 @@ def write_recipe(args):
 
     items = []
     for ingredient in all_ingredients():
-        if not int(ingredient.get('counts?') or '0'):
+        if not int(ingredient.get("counts?") or "0"):
             continue
-        if not ingredient.get('unit') in {'g', 'ml'}:
+        if ingredient.get("unit") not in {"g", "ml"}:
             continue
 
         item = RECIPE_ITEM.format(
@@ -187,26 +179,11 @@ def write_recipe(args):
         items.append(item)
 
     data = RECIPE_BODY.format(
-        title=card.lines[0].lstrip('#').strip(),
-        items=',\n    '.join(items),
+        title=card.lines[0].lstrip("#").strip(),
+        items=",\n    ".join(items),
     )
     print(data)
 
-    """{'ingredients': 'Cream 32% [REWE Beste Wahl]',
-        'amount': '25',
-        'unit': 'ml',
-        'step': '3',
-        'kcal': '311.00',
-        'fat': '32.00',
-        'carbs': '3.20',
-        'sugar': '3.20',
-        'protein': '2.50',
-        'salt': '0.13',
-        'fpdf': '0.03',
-        'msnf': '6.32',
-        'comment': '',
-        '0carb[%]': '',
-        'counts?': '1'},"""
 
 def main():
     """Main loop."""
@@ -219,7 +196,8 @@ def main():
     if args.as_recipe:
         write_recipe(args)
     else:
-        recipe_lib.abort('Unknown or unimplemented target format!')
+        recipe_lib.abort("Unknown or unimplemented target format!")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -32,6 +32,7 @@ Lists just like this one.
 - [The Frozen Dessert Spreadsheet of Doom](https://docs.google.com/spreadsheets/d/1fKilMlLa5IFT_kN1hVjlRWHdJ2v2NX5uGIxxYqJA_pQ/edit?usp=sharing) ([download](https://docs.google.com/spreadsheets/d/e/2PACX-1vRZdPU8V-8mM_KfvP5zElajPmhv-VhDe3q5phOGkhz3oYtbALSDIDKs_gW73vdP3EGkVBmq1dxITTsg/pub?output=xlsx))
 - [Ninja Creami at Samsung Food](https://s.samsungfood.com/eWWyY) — Make ice cream, smoothie bowls, milkshakes, and more using the Ninja Creami.
 - [proteinninja on RecipeSage](https://recipesage.com/#/people/@proteinninja) — Protein-Ninja.com's shared recipes.
+- [The Pint Lab — High-Protein Ninja Creami Ice Cream Recipes](https://thepintlab.com/community-recipes)
 
 ## Forums
 
@@ -147,6 +148,43 @@ however for beginners, I *do* recommend *Scoopulator*.
     - [de.openfoodfacts.org](https://de.openfoodfacts.org/) — The German version.
 
 - [USDA FoodData Central](https://fdc.nal.usda.gov/) — As long as you-know-who does not destroy it.
+- [Australian Food Composition Database](https://afcd.foodstandards.gov.au/foodbyalphabetsearch.aspx) (AFCD) by Food Standards Australia New Zealand (FSANZ) — A mix of basic ingredients and prepared food, searchable and categorized; they stand out by assigning IDs to their entries.
+
+    - [AFCD Data Files (FSANZ)](https://www.foodstandards.gov.au/science-data/food-nutrient-databases/afcd/data-files)
+
 - [Eat This Much — Browse Foods](https://www.eatthismuch.com/food/browse)
 - [FDDB](https://fddb.info/db/en/index.html) — Calorie table, food diary, food database.
 - [alko.fi](https://www.alko.fi/en/food-and-drinks) — Web shop that allows to search and browse for alcoholic products, and provides ABV, energy, and sugar content values (the latter are often hard to find).
+
+## Food Fact APIs
+
+APIs that provide RESTful access to macronutrients, micronutrients, and ingredient data. Also see *Nutritional Databases* above for downloadable data sets (typically spreadsheets) that some of them offer.
+
+### API Overview
+
+| *API Docs* | *DB Size* | *Pricing* | *Key Feature* |
+|---|---|---|---|
+| [Open Food Facts](https://openfoodfacts.github.io/openfoodfacts-server/api/) | 2.8M+ items | Free & Open Source | Barcode lookups and additive + ingredient tracking |
+| [USDA FoodData Central](https://fdc.nal.usda.gov/api-guide/) | 380,000+ items | Free | Research-grade micronutrient profiles for raw ingredients |
+| [FatSecret Platform](https://platform.fatsecret.com/platform-api) | 2.3M+ items | Tiered | Verified manufacturer data and global coverage |
+| [CalorieNinjas](https://calorieninjas.com/api) | 100,000+ items | Tiered | NLP-driven unstructured text and recipe parsing |
+
+### Open Food Facts API
+Open Food Facts is a collaborative, open-source database containing over 2.8 million products globally. It is particularly strong for international and European packaged foods, making it easy to retrieve data on ingredients, allergens, and specific food additives.
+
+The API supports barcode lookups and allows developers to submit product photos for AI-driven data extraction.
+
+### USDA FoodData Central API
+Maintained by the US government, this free API provides research-grade nutritional data for over 380,000 foods. It is ideal for precise scientific formulation, offering detailed micronutrient profiles, foundation food data, and raw ingredient chemistry without any usage limits.
+
+There are endpoints for searching foods and retrieving detailed nutrient breakdowns, using standard REST calls.
+
+### FatSecret Platform API
+FatSecret offers a massive, verified database of over 2.3 million generic, branded, and restaurant foods across 56 countries. It provides highly accurate macronutrient and micronutrient breakdowns, allergen information, and dietary tags like vegan or vegetarian.
+
+The data is sourced from verified manufacturer inputs and user contributions, ensuring high accuracy for commercial applications.
+
+### CalorieNinjas API
+CalorieNinjas specializes in natural language processing (NLP), allowing developers to pass unstructured text or images—such as a raw recipe—to extract nutritional facts.
+
+It covers over 100,000 foods and automatically calculates calories and macros based on the detected ingredients and serving sizes.
