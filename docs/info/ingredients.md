@@ -2,6 +2,17 @@
 
 Here you can find some background information about common ingredients in ice cream recipes.
 
+For definitions of some of the terms used here, see the [Glossary](/ice-creamery/info/glossary.md):
+
+- [Freezing Point Depression Factor (PAC)](/ice-creamery/info/glossary.md#potere-anti-congelante-pac)
+- [Sweetness (POD)](/ice-creamery/info/glossary.md#potere-dolcificante-pod)
+- [Glycemic Index (GI)](/ice-creamery/info/glossary.md#glycemic-index-gi)
+- [Dextrose Equivalent (DE)](/ice-creamery/info/glossary.md#dextrose-equivalent-de)
+- [Hydrophilic-Lipophilic Balance (HLB)](/ice-creamery/info/glossary.md#hydrophilic-lipophilic-balance-hlb)
+- [Milk Solids Not-Fat (MSNF)](/ice-creamery/info/glossary.md#milk-solids-not-fat-msnf)
+- [Ultra Processed Food (UPF)](/ice-creamery/info/glossary.md#ultra-processed-food-upf)
+
+
 ## Freezing Point Depression Factor (PAC) and Sweetness (POD)
 
 !!! tip "Reference Information"
@@ -11,6 +22,10 @@ Here you can find some background information about common ingredients in ice cr
     of all those abbreviations, or skip the table for now and read on further below.
 
 ### Common Ingredient PAC / POD / GI Values
+
+> ![Ingredient Tier Lists: PAC, POD, GI](https://raw.githubusercontent.com/jhermann/ice-creamery/refs/heads/main/assets/ingredients-tier-lists.png)
+> <br />*Infographic:* Ingredient tier lists for ice cream by anti-freezing power (PAC), sweetness (POD), and glycemic index (GI).
+
 [Freezing point depression factor](/ice-creamery/info/glossary/#potere-anti-congelante-pac) (FPDF / PAC),
 [sweetness](/ice-creamery/info/glossary/#potere-dolcificante-pod) (POD),
 and [glycemic index](/ice-creamery/info/glossary/#glycemic-index-gi) (GI)
@@ -49,6 +64,7 @@ of common ingredients, sorted by PAC.
 |  34 |  21 | 110 | Maltodextrin (18 DE) | |
 |  22 |  10 |  1 | [Inulin](#inulin) | |
 | <20 |  ≈10 |  <55 | [Resistant Dextrin](#resistant-dextrin-e1400) (E1400) | GI typically ranges from 25 to 48 |
+
 
 !!! science "Sources"
 
@@ -103,11 +119,14 @@ are most commonly used here. If in powdered form, make sure the bulking agent ha
 
 In "classic" recipes, a similar effect is used by balancing table sugar with sweeteners
 that have a higher PAC and a lower POD, like dextrose.
-If both PAC and POD are too low, invert sugar or fructose give a boost to both at the same time.
+If both PAC and POD are too low, [invert sugar](#invert-sugar) or [fructose](#fructose) give a boost to both at the same time.
 
 See the table above and the next section for details.
 
 ## Sweeteners
+
+> ----
+> ![Infographic summarizing ice cream sweeteners, their functions, benefits, and best uses](https://raw.githubusercontent.com/jhermann/ice-creamery/refs/heads/main/assets/sweeteners-at-a-glance.png)
 
 ### Allulose
 Allulose is a low-calorie sweetener (about 10% the energy of sucrose, and a GI of zero),
@@ -160,7 +179,15 @@ It has a PAC of 256, a POD of ≈85%, and a GI below 7 (i.e. below that of xylit
     Use 133% of the given amount of *SweEX* to attain about the same PAC and POD values.
     That means using 75% of a given pure [allulose](#allulose) amount in the other direction.
 
+### Fructose
+Fructose is a simple sugar (monosaccharide) found naturally in fruits, honey, and root vegetables. It is about 1.7 times sweeter than sucrose (table sugar) and has a high PAC (freezing point depression factor), making it useful for softening ice cream texture.
+
+In recipes, it is often used to boost both sweetness and PAC, but excessive use can lead to a pronounced sweetness and a softer, sometimes sticky texture.
+
+Fructose is also a component of high-fructose corn syrup and invert sugar.
+
 ### Inulin
+
 Inulin is a naturally occurring polysaccharide, and used to improve mouthfeel, stability, acceptability of low-fat ice creams, and forms a gel-like network that binds water.
 
 Inulin has fewer calories (2 kcal/g) compared to fat (9 kcal/g) or sucrose (4 kcal/g).
@@ -198,6 +225,12 @@ It has high heat resistance and will not melt until it reaches 145°C.
 
 It is very similar to [maltitol](#maltitol-e965), and requires care regarding daily intake just like other sugar alcohols.
 Chemically it is a mix of glucose (50%), sorbitol (25%), and mannitol (25%).
+
+### Invert Sugar
+
+*Invert sugar* is a mixture of glucose and fructose created by splitting sucrose (table sugar). It is sweeter and more hygroscopic than sucrose, helping to retain moisture and improve texture in ice cream.
+
+Invert sugar lowers the freezing point more than sucrose, resulting in a softer, smoother product. It is often used to prevent crystallization and improve scoopability, especially in recipes with high sugar content.
 
 ### Maltitol (E965)
 
@@ -243,12 +276,20 @@ and used as a bulk agent, filler, and humectant. It can replace fat and sugar,
 reduce calories, and improve texture and mouthfeel. It is considered a prebiotic fiber
 and only has about 1 kcal/g.
 
-It is a long-chain, sugar-like molecule that is not fully digestible by human enzymes. 
+It is a long-chain, sugar-like molecule that is not fully digestible by human enzymes.
 EU regulations require labelling above 15g for possible GI issues in sensitive individuals,
 so take that into account. From a safety standpoint, there are no limits set.
 
 Compared to [inulin](#inulin), polydextrose is also a soluble fiber and very similar in sweetness and GI,
 but has a five times higher PAC of 100.
+
+### Maltodextrin
+
+*Maltodextrin (18 DE)* is a polysaccharide produced from starch (usually corn, potato, or rice) with a dextrose equivalent (DE) of 18, indicating moderate sweetness and solubility.
+
+In ice cream, maltodextrin is used as a bulking agent and to improve body and texture without adding much sweetness. It has a high glycemic index and a low PAC, so it does not significantly soften the ice cream.
+
+Maltodextrin is useful for increasing solids and reducing iciness, especially in low-fat or reduced-sugar recipes.
 
 ### Resistant Dextrin (E1400)
 
@@ -388,6 +429,8 @@ Most thickeners are hydrocolloids, which are hydrophilic molecules that have a h
 
 Many thickeners also have an emulsifying effect.
 
+> ![Infographic showing types, ratios, and usage tips for natural hydrocolloid thickeners (E4xx group) in ice cream, including a spoon with thickened liquid, combination guidelines, and a table of recommended blends](https://raw.githubusercontent.com/jhermann/ice-creamery/refs/heads/main/assets/info-graphic-thickeners-E4xx.png)
+
 Using only a singular thickener means you often miss out on synergistic effects of a combination of several thickeners, e.g. forming specific kinds of gels (SIGs).
 
  * Use guar/tara in combination with xanthan, ratio `4TG:1XG` or `3GG:1XG`.
@@ -402,6 +445,22 @@ Using only a singular thickener means you often miss out on synergistic effects 
   * *LBG + GG + λC* (general purpose): 4:2:1, 0.8g+0.4g+0.2g / 1kg (0.25% of water weight); has to be heated to >80°C for full LBG hydration.
   * *Soy Lecithin + LBG + GG + λC* (eggless): 4:4:2:1, 1g+1g+0.5g+0.25g / 1kg (0.4% of water weight); has to be heated to >80°C for full LBG hydration.
   * *CMC + GG + λC* (sorbet): 2:1:1, 2g+1g+1g / 1kg (0.5% of water weight); no cooking; add 1g lecithin when you have fatty ingredients (nut butter, melted chocolate, ...).
+
+!!! science "Relative Viscosity of Gums"
+
+    Gum viscosity depends on temperature, shear rate, pH, and gum grade; it's also strongly concentration- and shear-dependent. For fully hydrated single-gum solutions of 0.2% w/v in water at 25°C the following table gives an *estimation*.
+
+    | Gum                   |        Published intrinsic viscosity used | Estimated viscosity at 0.2% w/v |
+    | --------------------- | ----------------------------------------: | ------------------------------: |
+    | Xanthan               |                       15.5 m³/kg in water |                       ~32 mPa·s |
+    | Tara                  | 6.9–16.46 dL/g, depending on source/grade |                  ~2.4–4.3 mPa·s |
+    | Guar                  |                                 12.5 dL/g |                      ~3.5 mPa·s |
+    | Locust bean gum (LBG) |                                11.03 dL/g |                      ~3.2 mPa·s |
+    | CMC                   |                              3.16155 dL/g |                     ~1.63 mPa·s |
+    | Gum arabic            |                                  0.6 dL/g |                     ~1.12 mPa·s |
+
+    *The practical takeaway is:* xanthan is the most powerful, with gum arabic at the other end of the spectrum.
+    Tara/guar/LBG form an overlapping middle group, with CMC below that.
 
 ### Acacia Gum (Gum Arabic / E414)
 
@@ -443,7 +502,7 @@ It also enhances the freeze-thaw stability of ice cream.
 
 It can replace gelatin and also [Waxy Maize Starch (E1442)](#waxy-maize-starch-e1442),
 another modified starch, with similar results.
-More specifically E1422 is ideal for frozen and chilled foods, dressings, and bakery products, 
+More specifically E1422 is ideal for frozen and chilled foods, dressings, and bakery products,
 while E1442 is well-suited for acidic foods, high-temperature processing, and dairy products.
 
 ### Agar-Agar (E406)
@@ -479,7 +538,7 @@ and is an [EFSA authorised food additive](https://www.efsa.europa.eu/en/efsajour
 ### Carrageenans (E407)
 [Carrageenans](https://en.wikipedia.org/wiki/Carrageenan) are a family of natural polysaccharides derived from red seaweed (*Irish Moss*), and used as a thickening, emulsifying, and stabilizing agent. They improve texture and prevent ice crystal formation, and are often added to plant-based milks.
 
-Different types of carrageenan exist, each with slightly different properties, including κ-carrageenan, ι-carrageenan, and λ-carrageenan. 
+Different types of carrageenan exist, each with slightly different properties, including κ-carrageenan, ι-carrageenan, and λ-carrageenan.
 
  * *Kappa* forms strong, rigid gels in the presence of potassium ions, and reacts with dairy proteins.
  * *Iota* forms soft gels in the presence of calcium ions.
@@ -493,6 +552,7 @@ leading to a better melting behaviour.
 *Safety:* Carrageenans are considered GRAS by the FDA, and an EFSA re-evaluation concluded that they are not absorbed intact, and there is no concern with respect to carcinogenicity or genotoxicity. EFSA sees the need to obtain further data though, to address identified gaps.
 
 ### Carboxymethyl Cellulose (CMC / E466)
+
 CMC is used to stabilize and improve the texture of ice cream.
 It's a thickening agent and emulsifier that is very good at
 preventing ice crystals from forming, resulting in a smoother,
@@ -507,6 +567,16 @@ CMC should be used in combination with GMS, see there for ratios.
 CMC forms weak gels by itself but gels well in combination with carrageenan, LBG, or guar gum.
 
 *Also know as:* cellulose gum / Tylo / Tylose / Blütenpuder.
+
+!!! science "CMC Grades"
+
+    CMC comes in several practical grades, but for a home cook the main difference is viscosity and solubility. Some grades hydrate quickly and stay fairly light, while others build much more body and can make a mix feel thicker or more elastic.
+
+    For ice cream, this matters because a lower-viscosity grade usually gives a cleaner, smoother texture, while a higher-viscosity grade gives more water binding and more resistance to melting. If the grade is too strong, the result can turn gummy or slightly slimy instead of pleasantly creamy. In practice, a *medium food-grade CMC* is often the safest all-purpose choice.
+
+    In practice, look for food-grade or E466, plus a stated viscosity on the label or data sheet, or even better a general category: low, medium, or high viscosity. The unit used is millipascal-seconds (mPa·s) and defines how thick a liquid is. Glycerol has ~1500 mPa·s, and a standard 2% aqueous solution of "tylo powder" CMC at 25°C has about 2500–4500 mPa·s, similar to the thickness of heavy glucose syrup or honey.
+
+    My brand is *GoodBake* (EAN 4260598681623), and 1tsp is 3.2g. Dissolved in 200ml for 'food glue' (1.6% w/v) it should have 600–1000 mPa·s.
 
 ### Gelatin
 Gelatin acts as a stabilizer, preventing ice crystal formation and
@@ -543,7 +613,7 @@ and is a vegan and gluten-free alternative to gelatin.
 
 HPMC is a plant-derived, semisynthetic polymer that is well-tolerated and poses no significant health risks,
 acting like a water-soluble dietary fiber.
-It is resistant to heat and humidity and is used to protect moisture-sensitive ingredients in various products. 
+It is resistant to heat and humidity and is used to protect moisture-sensitive ingredients in various products.
 
 ### Locust Bean Gum (LBG / E410)
 LBG is a vegetable-based hydrocolloid extracted from the seeds of the carob tree.
@@ -671,9 +741,27 @@ to be easier to dissolve and mix with no clumping and to hydrate faster,
 compared with regular xanthan gum.
 This is achieved by either *pre-hydration* or *agglomeration* (granularization).
 
-Combine xanthan with LBG for a cold gel. At certain ratios, like 7:3 LBG to XG,
+Combine [xanthan](#xanthan-gum-xg-e415) with [LBG](#locust-bean-gum-lbg-e410) for a cold gel. At certain ratios, like 7:3 LBG to XG,
 the synergistic effect is maximized, resulting in a harder gel.
 Heating can facilitate the formation of the gel network.
+
+!!! science "Scientific Background"
+
+    **The Power of Xanthan and Guar Gum**
+
+    Stabilizers like xanthan gum (XG) and guar gum (GG) are used to make the liquid parts of the ice cream thicker.
+
+    Interestingly, when you mix xanthan gum with other stabilizers like guar gum, they work better together than they do alone.
+
+    **Specific Blend Ratios**
+
+    A specific synergistic blend consisting of **25% xanthan gum and 75% guar gum** (referred to as **X1 G3**) is preferable. When this specific ratio is used, the resulting mixture behaves similarly to pure xanthan gum but provides a significantly higher viscosity across all conditions than either ingredient could achieve on its own.
+
+    **Functional Differences**
+
+    A combination of xanthan and guar gum will increase the thickness of a liquid even when dissolved in **cold water**. In contrast, other blends (like xanthan mixed with locust bean gum) only react and thicken once the mixture has been **heated**.
+
+    > *Source:* [Food Manufacturing Africa Q1 2020: Texture control, stabilisation and xanthan gum](https://savannah.co.za/wp-content/uploads/2020/03/FMA-Q1_JB-March20.pdf)
 
 ### Waxy Maize Starch (E1442)
 This is a modified starch derived from waxy corn, used as a thickening agent, stabilizer, and texturizer
@@ -701,7 +789,7 @@ And see [Green Banana Powder](#green-banana-powder-plantain) for a more natural,
 Emulsifiers are major contributors to a smooth, creamy texture
 by stabilizing the fat and water components in ice cream, preventing their separation.
 They help create smaller ice crystals, leading to a smoother, creamier texture,
-and also play a role in controlling melting and enhancing the overall eating experience. 
+and also play a role in controlling melting and enhancing the overall eating experience.
 
 Egg yolk is a natural source of emulsifiers, particularly lecithin.
 
@@ -793,7 +881,7 @@ almond butter, bananas, dates, cashews, and hemp hearts.
 specifically representing about 80% of the total protein in milk from cows, goats, and sheep.
 It's a byproduct of cheese production, where it's separated from the whey.
 
-Unlike whey protein, which is rapidly absorbed, casein digests slowly, releasing amino acids over several hours. 
+Unlike whey protein, which is rapidly absorbed, casein digests slowly, releasing amino acids over several hours.
 It can help prevent muscle breakdown during periods of fasting.
 
 In ice cream, it leads to thicker and more dense consistencies compared to whey.
@@ -847,7 +935,7 @@ Also make sure to check for any added stabilizers and other additions in a produ
 a good product just needs milk/cream and salt, and maybe some yogurt.
 
 In ice cream it acts as a stabilizer (via its milk solids, proteins, and lactose),
-and improves texture. Cream cheese also contributes to a richer, denser flavor. 
+and improves texture. Cream cheese also contributes to a richer, denser flavor.
 
 
 ### Protein Powder in General
@@ -872,18 +960,18 @@ and improves texture. Cream cheese also contributes to a richer, denser flavor.
 -   **Flavor preference matters**: Disliking a commercial powder may mean you actually dislike its main base protein.
 
 An alternative to using protein powders are high-protein milk products like
-[Cottage Cheese](/ice-creamery/info/ingredients/#cottage-cheese),
-[Cream Cheese](/ice-creamery/info/ingredients/#cream-cheese),
-[Quark (Topfen)](/ice-creamery/info/ingredients/#quark-topfen),
-(Silken) [Tofu](/ice-creamery/info/ingredients/#tofu),
+[Cottage Cheese](#cottage-cheese),
+[Cream Cheese](#cream-cheese),
+[Quark (Topfen)](#quark-topfen),
+(Silken) [Tofu](#tofu),
 and others like Greek Yogurt, Kefir and Skyr. For many people's taste, they create a more authentic ice cream consistency, but be aware of the impact on taste, e.g. some are adding a 'tangy' flavor.
 
 *See also:*
 
-- [Casein](/ice-creamery/info/ingredients/#casein)
-- [Skim Milk Powder (SMP)](/ice-creamery/info/ingredients/#skim-milk-powder-smp)
-- [Soy Protein Isolate](/ice-creamery/info/ingredients/#soy-protein-isolate)
-- [Whey Protein](/ice-creamery/info/ingredients/#whey-protein)
+- [Casein](#casein)
+- [Skim Milk Powder (SMP)](#skim-milk-powder-smp)
+- [Soy Protein Isolate](#soy-protein-isolate)
+- [Whey Protein](#whey-protein)
 
 ### Quark (Topfen)
 Quark (German) and Topfen (Austrian, South German) are both types of fresh, soft cheese,
@@ -942,7 +1030,7 @@ Soured milk can be incorporated into ice cream recipes,
 especially when a tangy or slightly tart flavor is desired.
 It's important to consider the fat content and thickness
 when substituting soured milk for regular milk or cream.
-*Avoid heating the soured milk*, and whisk it in after a custard base has cooled. 
+*Avoid heating the soured milk*, and whisk it in after a custard base has cooled.
 
 ### Soy Milk
 Soy milk is a plant-based alternative to cow's milk made from soybeans.
@@ -959,7 +1047,7 @@ all your "FP depression budget" on the boozy part.
 ### Soy Protein Isolate
 Soy protein isolate is a highly concentrated source of protein derived from soybeans.
 It's a protein powder that's been processed to remove non-protein components
-like fats and carbohydrates, resulting in a product that is over 90% protein. 
+like fats and carbohydrates, resulting in a product that is over 90% protein.
 
 It is used in ice cream primarily to improve its texture and stability,
 especially in low-fat versions, and to enhance the protein content.
@@ -1057,11 +1145,11 @@ It has about 67% of the sodium of table salt, and you can add up to 0.6% to a ba
 
 It can make the texture softer and creamier, potentially due to the formation of small cavities from CO₂ bubbles that weaken the bonding between ice crystals and other ingredients.
 
-Milk solids, cream, and stabilizers are more commonly used to achieve desired textures. 
+Milk solids, cream, and stabilizers are more commonly used to achieve desired textures.
 
 ### Cocoa Powder
 
-Cocoa powder is a key ingredient in chocolate ice cream, providing both flavor and color. It's made from cocoa beans, and the powder is essentially the solids left after much of the cocoa butter is removed. In ice cream, it adds a rich, chocolatey taste and contributes to the overall texture and melting properties. 
+Cocoa powder is a key ingredient in chocolate ice cream, providing both flavor and color. It's made from cocoa beans, and the powder is essentially the solids left after much of the cocoa butter is removed. In ice cream, it adds a rich, chocolatey taste and contributes to the overall texture and melting properties.
 
 The type of cocoa powder used can influence the flavor profile, with Dutch-process cocoa powder (a/k/a alkalized or European-style) often preferred for its milder, less acidic and bitter taste. It also has a darker color.
 
